@@ -1,0 +1,4 @@
+module package_info_plus {
+    umbrella "/Volumes/luk3d/eventus_x/eventus_x/vendor/flutter_rtmp_broadcaster/example/ios/Flutter/ephemeral/Packages/.packages/package_info_plus/Sources/package_info_plus/include"
+    export *
+}

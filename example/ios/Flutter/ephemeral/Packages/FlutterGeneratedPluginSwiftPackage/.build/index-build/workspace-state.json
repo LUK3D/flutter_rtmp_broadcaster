@@ -1,0 +1,55 @@
+{
+  "object" : {
+    "artifacts" : [
+
+    ],
+    "dependencies" : [
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "package_info_plus",
+          "kind" : "fileSystem",
+          "location" : "/Volumes/luk3d/eventus_x/eventus_x/vendor/flutter_rtmp_broadcaster/example/ios/Flutter/ephemeral/Packages/.packages/package_info_plus",
+          "name" : "package_info_plus"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Volumes/luk3d/eventus_x/eventus_x/vendor/flutter_rtmp_broadcaster/example/ios/Flutter/ephemeral/Packages/.packages/package_info_plus"
+        },
+        "subpath" : "package_info_plus"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "path_provider_foundation",
+          "kind" : "fileSystem",
+          "location" : "/Volumes/luk3d/eventus_x/eventus_x/vendor/flutter_rtmp_broadcaster/example/ios/Flutter/ephemeral/Packages/.packages/path_provider_foundation",
+          "name" : "path_provider_foundation"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Volumes/luk3d/eventus_x/eventus_x/vendor/flutter_rtmp_broadcaster/example/ios/Flutter/ephemeral/Packages/.packages/path_provider_foundation"
+        },
+        "subpath" : "path_provider_foundation"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "video_player_avfoundation",
+          "kind" : "fileSystem",
+          "location" : "/Volumes/luk3d/eventus_x/eventus_x/vendor/flutter_rtmp_broadcaster/example/ios/Flutter/ephemeral/Packages/.packages/video_player_avfoundation",
+          "name" : "video_player_avfoundation"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Volumes/luk3d/eventus_x/eventus_x/vendor/flutter_rtmp_broadcaster/example/ios/Flutter/ephemeral/Packages/.packages/video_player_avfoundation"
+        },
+        "subpath" : "video_player_avfoundation"
+      }
+    ],
+    "prebuilts" : [
+
+    ]
+  },
+  "version" : 7
+}
