@@ -222,6 +222,8 @@ FlutterStreamHandler>
 - (void)startImageStreamWithMessenger:(NSObject<FlutterBinaryMessenger> *)messenger;
 - (void)stopImageStream;
 - (void)captureToFile:(NSString *)filename result:(FlutterResult)result;
+- (NSDictionary<NSString *, NSNumber *> *)switchCameraWithName:(NSString *)cameraName
+                                                         error:(NSError **)error;
 @end
 
 @implementation FLTCam {
@@ -644,6 +646,82 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     for (AVCaptureOutput *output in [_captureSession outputs]) {
         [_captureSession removeOutput:output];
     }
+}
+
+- (NSDictionary<NSString *, NSNumber *> *)switchCameraWithName:(NSString *)cameraName
+                                                         error:(NSError **)error {
+    if (_isRecording || _isStreaming) {
+        if (error) {
+            *error = [NSError errorWithDomain:NSCocoaErrorDomain
+                                         code:NSURLErrorCannotWriteToFile
+                                     userInfo:@{
+                                         NSLocalizedDescriptionKey :
+                                             @"Cannot switch camera while recording or streaming."
+                                     }];
+        }
+        return nil;
+    }
+
+    AVCaptureDevice *nextDevice = [AVCaptureDevice deviceWithUniqueID:cameraName];
+    if (!nextDevice) {
+        if (error) {
+            *error = [NSError errorWithDomain:NSCocoaErrorDomain
+                                         code:NSURLErrorBadURL
+                                     userInfo:@{
+                                         NSLocalizedDescriptionKey : @"Camera not found."
+                                     }];
+        }
+        return nil;
+    }
+
+    NSError *localError = nil;
+    AVCaptureDeviceInput *nextVideoInput =
+        [AVCaptureDeviceInput deviceInputWithDevice:nextDevice error:&localError];
+    if (localError) {
+        if (error) {
+            *error = localError;
+        }
+        return nil;
+    }
+
+    AVCaptureVideoDataOutput *nextVideoOutput = [AVCaptureVideoDataOutput new];
+    nextVideoOutput.videoSettings =
+        @{(NSString *)kCVPixelBufferPixelFormatTypeKey : @(videoFormat)};
+    [nextVideoOutput setAlwaysDiscardsLateVideoFrames:YES];
+    [nextVideoOutput setSampleBufferDelegate:self queue:dispatch_get_main_queue()];
+
+    [_captureSession beginConfiguration];
+    if (_captureVideoInput) {
+        [_captureSession removeInput:_captureVideoInput];
+    }
+    if (_captureVideoOutput) {
+        [_captureSession removeOutput:_captureVideoOutput];
+    }
+
+    _captureDevice = nextDevice;
+    _captureVideoInput = nextVideoInput;
+    _captureVideoOutput = nextVideoOutput;
+
+    [_captureSession addInputWithNoConnections:_captureVideoInput];
+    [_captureSession addOutputWithNoConnections:_captureVideoOutput];
+
+    AVCaptureConnection *connection =
+        [AVCaptureConnection connectionWithInputPorts:_captureVideoInput.ports
+                                               output:_captureVideoOutput];
+    if ([_captureDevice position] == AVCaptureDevicePositionFront) {
+        connection.videoMirrored = YES;
+    }
+    connection.videoOrientation = AVCaptureVideoOrientationPortrait;
+    [_captureSession addConnection:connection];
+
+    [self setCaptureSessionPreset:_resolutionPreset];
+    [_captureSession commitConfiguration];
+
+    return @{
+        @"previewWidth" : @(_previewSize.width),
+        @"previewHeight" : @(_previewSize.height),
+        @"previewQuarterTurns" : @0,
+    };
 }
 
 - (void)dealloc {
@@ -1101,8 +1179,19 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
                 @"previewHeight" : @(cam.previewSize.height),
                 @"captureWidth" : @(cam.captureSize.width),
                 @"captureHeight" : @(cam.captureSize.height),
+                @"previewQuarterTurns" : @0,
                    });
             [cam start];
+        }
+    } else if ([@"switchCamera" isEqualToString:call.method]) {
+        NSString *cameraName = call.arguments[@"cameraName"];
+        NSError *error;
+        NSDictionary<NSString *, NSNumber *> *reply =
+            [_camera switchCameraWithName:cameraName error:&error];
+        if (error) {
+            result(getFlutterError(error));
+        } else {
+            result(reply);
         }
     } else if ([@"startImageStream" isEqualToString:call.method]) {
         [_camera startImageStreamWithMessenger:_messenger];

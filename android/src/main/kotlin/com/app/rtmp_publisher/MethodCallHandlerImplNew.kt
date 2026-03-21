@@ -79,6 +79,15 @@ class MethodCallHandlerImplNew(
                     })
             }
 
+            "switchCamera" -> {
+                Log.i("Stuff", "switchCamera ${call.arguments}")
+                try {
+                    switchCamera(call, result)
+                } catch (e: Exception) {
+                    handleException(e, result)
+                }
+            }
+
             "takePicture" -> {
                 Log.i("Stuff", "takePicture")
                 getCameraView()?.takePicture(call.argument("path")!!, result)
@@ -221,6 +230,25 @@ class MethodCallHandlerImplNew(
             getCameraView()?.startPreview(cameraName)
             result.success(reply)
         }, 100)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+    @Throws(CameraAccessException::class)
+    private fun switchCamera(call: MethodCall, result: MethodChannel.Result) {
+        val cameraName = call.argument<String>("cameraName") ?: run {
+            result.error("switchCameraFailed", "Must specify a cameraName.", null)
+            return
+        }
+        val preset = nativeViewFactory?.preset ?: Camera.ResolutionPreset.low
+        val previewSize = CameraUtils.computeBestPreviewSize(cameraName, preset)
+        nativeViewFactory?.cameraName = cameraName
+        getCameraView()?.startPreview(cameraName)
+
+        val reply: MutableMap<String, Any> = HashMap()
+        reply["previewWidth"] = previewSize.width
+        reply["previewHeight"] = previewSize.height
+        reply["previewQuarterTurns"] = currentOrientation / 90
+        result.success(reply)
     }
 
     private fun isFrontFacing(cameraName: String): Boolean {

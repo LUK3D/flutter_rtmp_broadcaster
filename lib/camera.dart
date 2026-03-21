@@ -333,7 +333,7 @@ class CameraController extends ValueNotifier<CameraValue> {
     this.androidUseOpenGL = false,
   }) : super(const CameraValue.uninitialized());
 
-  final CameraDescription description;
+  CameraDescription description;
   final ResolutionPreset resolutionPreset;
   final ResolutionPreset? streamingPreset;
 
@@ -386,6 +386,43 @@ class CameraController extends ValueNotifier<CameraValue> {
         .listen(_listener);
     _creatingCompleter!.complete();
     return _creatingCompleter!.future;
+  }
+
+  /// Switches the active preview camera without recreating the controller.
+  ///
+  /// Throws a [CameraException] if the switch fails.
+  Future<void> switchCamera(CameraDescription nextDescription) async {
+    if (_isDisposed) {
+      return Future<void>.value();
+    }
+    if (!(value.isInitialized ?? false)) {
+      throw CameraException(
+        'Uninitialized CameraController',
+        'switchCamera was called on an uninitialized CameraController',
+      );
+    }
+
+    try {
+      final Map<String, dynamic> reply =
+          (await _channel.invokeMapMethod<String, dynamic>(
+        'switchCamera',
+        <String, dynamic>{
+          'cameraName': nextDescription.name,
+          'textureId': _textureId,
+        },
+      ))!;
+      description = nextDescription;
+      value = value.copyWith(
+        previewSize: Size(
+          reply['previewWidth'].toDouble(),
+          reply['previewHeight'].toDouble(),
+        ),
+        previewQuarterTurns: reply['previewQuarterTurns'],
+        errorDescription: null,
+      );
+    } on PlatformException catch (e) {
+      throw CameraException(e.code, e.message);
+    }
   }
 
   /// Prepare the capture session for video recording.
@@ -783,8 +820,11 @@ class CameraController extends ValueNotifier<CameraValue> {
         'filePath': filePath,
         'bitrate': bitrate,
       });
-      value =
-          value.copyWith(isStreamingVideoRtmp: true, isStreamingPaused: false, isRecordingVideo: true, isRecordingPaused: false);
+      value = value.copyWith(
+          isStreamingVideoRtmp: true,
+          isStreamingPaused: false,
+          isRecordingVideo: true,
+          isRecordingPaused: false);
     } on PlatformException catch (e) {
       throw CameraException(e.code, e.message);
     }
