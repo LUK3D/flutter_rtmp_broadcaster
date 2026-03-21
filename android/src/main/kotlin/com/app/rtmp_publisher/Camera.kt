@@ -683,8 +683,13 @@ class Camera(
         }
         try {
             currentRetries = 0
-//            rtmpCamera!!.pauseStream()
+            if (!rtmpCamera!!.isAudioMuted) {
+                rtmpCamera!!.disableAudio()
+            }
         } catch (e: IllegalStateException) {
+            result.error("videoStreamingFailed", e.message, null)
+            return
+        } catch (e: IOException) {
             result.error("videoStreamingFailed", e.message, null)
             return
         }
@@ -720,8 +725,13 @@ class Camera(
             return
         }
         try {
-//            rtmpCamera!!.resumeStream()
+            if (rtmpCamera!!.isAudioMuted) {
+                rtmpCamera!!.enableAudio()
+            }
         } catch (e: IllegalStateException) {
+            result.error("videoStreamingFailed", e.message, null)
+            return
+        } catch (e: IOException) {
             result.error("videoStreamingFailed", e.message, null)
             return
         }
