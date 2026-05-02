@@ -34,11 +34,22 @@ public class FlutterRTMPStreaming : NSObject {
         rtmpConnection.addEventListener(.rtmpStatus, selector:#selector(rtmpStatusHandler), observer: self)
         rtmpConnection.addEventListener(.ioError, selector: #selector(rtmpErrorHandler), observer: self)
         
-        let uri = URL(string: url)
-        self.name = uri?.pathComponents.last
-        var bits = url.components(separatedBy: "/")
-        bits.removeLast()
-        self.url = bits.joined(separator: "/")
+        if let uri = URL(string: url), var components = URLComponents(url: uri, resolvingAgainstBaseURL: false) {
+            var pathComponents = uri.pathComponents.filter { $0 != "/" }
+            var streamName = pathComponents.popLast() ?? ""
+            if let query = components.query, !query.isEmpty {
+                streamName += "?\(query)"
+            }
+
+            components.path = pathComponents.isEmpty ? "" : "/\(pathComponents.joined(separator: "/"))"
+            components.query = nil
+
+            self.name = streamName
+            self.url = components.url?.absoluteString
+        } else {
+            self.name = nil
+            self.url = nil
+        }
         
         // TODO: Da correggere
         rtmpStream.videoSettings = [
